@@ -1,5 +1,5 @@
-# run 'python3 server.py'
 # POST from powershell with JSON data: curl -body '{"foo": "value1", "bar": "next_value1"}' http://localhost:8000 -Method POST
+# pip install tinydb
 
 import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -13,22 +13,6 @@ ServerPort = 8000
 # args = {}
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
-
-    # args = {}
-
-    # def insert_data(self, args):
-        # DB.insert({'foo': 'value1', 'bar': 2}) # this is an example
-		  # data = json.dumps(self.some_shit_from_self)
-		  # for obj in data:
-		  #     DB.insert(obj)
-        # DB.insert(args)
-
-    def delete_data(self):
-        DB.purge() # remove all
-
-    def query_all_data(self):
-        print(DB.all())
-        #print(len(DB)) # number of items
 
     def _set_headers(self):
         self.send_response(200)
@@ -58,7 +42,13 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         request_data = body.decode(encoding="utf-8")
         for obj in request_data:
             DB.insert(json.loads(request_data))
-    
+
+    # def delete_data(self):
+        # DB.purge() # remove all
+
+    # def query_all_data(self):
+        # print(DB.all())
+        # print(len(DB)) # number of items    
 	# for search and update see https://www.python-engineer.com/posts/tinydb/#:~:text=New%20York%27%7D)-,def%20search_user()%3A,-results%20%3D%20db
 
 if __name__ == "__main__":        
