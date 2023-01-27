@@ -1,29 +1,74 @@
 # run 'python3 server.py'
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import time
+# POST from powershell with JSON data: curl -body '{"foo": "value1", "bar": "next_value1"}' http://localhost:8000 -Method POST
 
-hostName = "localhost"
-serverPort = 8080
+import json
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from io import BytesIO
+from tinydb import TinyDB, Query
 
-class MyServer(BaseHTTPRequestHandler):
-    def do_GET(self):
+DB = TinyDB('DB.json')
+User = Query()
+HostName = "localhost"
+ServerPort = 8000
+# args = {}
+
+class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+
+    # args = {}
+
+    # def insert_data(self, args):
+        # DB.insert({'foo': 'value1', 'bar': 2}) # this is an example
+		  # data = json.dumps(self.some_shit_from_self)
+		  # for obj in data:
+		  #     DB.insert(obj)
+        # DB.insert(args)
+
+    def delete_data(self):
+        DB.purge() # remove all
+
+    def query_all_data(self):
+        print(DB.all())
+        #print(len(DB)) # number of items
+
+    def _set_headers(self):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        self.wfile.write(bytes("<html><head><title>https://pythonbasics.org</title></head>", "utf-8"))
-        self.wfile.write(bytes("<p>Request: %s</p>" % self.path, "utf-8"))
+
+    def do_GET(self):
+        self._set_headers()
+        self.wfile.write(bytes("<html><head><title>My PI server</title></head>", "utf-8"))
+        self.wfile.write(bytes("<p>GET request: %s</p>" % self.path, "utf-8"))
+        self.wfile.write(bytes("<p>requestline: %s</p>" %self.requestline, "utf-8"))
+        self.wfile.write(bytes("<p>command: %s</p>" %self.command, "utf-8"))
+        self.wfile.write(bytes("<p>headers: %s</p>" %self.headers, "utf-8"))
         self.wfile.write(bytes("<body>", "utf-8"))
-        self.wfile.write(bytes("<p>This is an example web server.</p>", "utf-8"))
+        self.wfile.write(bytes("<p>This is a log for GET requests.</p>", "utf-8"))
         self.wfile.write(bytes("</body></html>", "utf-8"))
 
-if __name__ == "__main__":        
-    webServer = HTTPServer((hostName, serverPort), MyServer)
-    print("Server started http://%s:%s" % (hostName, serverPort))
+    def do_POST(self):
+        content_length = int(self.headers['Content-Length'])
+        body = self.rfile.read(content_length)
+        self._set_headers()
+        response = BytesIO()
+        response.write(b'This is POST request. ')
+        response.write(b'Received: ')
+        response.write(body)
+        self.wfile.write(response.getvalue())
+        request_data = body.decode(encoding="utf-8")
+        for obj in request_data:
+            DB.insert(json.loads(request_data))
+    
+	# for search and update see https://www.python-engineer.com/posts/tinydb/#:~:text=New%20York%27%7D)-,def%20search_user()%3A,-results%20%3D%20db
 
-    try:
-        webServer.serve_forever()
+if __name__ == "__main__":        
+    httpd = HTTPServer((HostName, ServerPort), SimpleHTTPRequestHandler)
+    print("Server started http://%s:%s" % (HostName, ServerPort))
+
+    try:        
+        httpd.serve_forever()
     except KeyboardInterrupt:
         pass
 
-    webServer.server_close()
+    httpd.server_close()
     print("Server stopped.")
